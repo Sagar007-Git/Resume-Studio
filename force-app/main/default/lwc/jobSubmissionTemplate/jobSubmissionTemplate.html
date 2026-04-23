@@ -1,0 +1,154 @@
+<template>
+    <div class="st-wrapper">
+        <div class="st-header">
+            <div class="st-header-left">
+                <div class="st-header-icon">
+                    <lightning-icon icon-name="utility:setup" size="small"></lightning-icon>
+                </div>
+                <div>
+                    <h2 class="st-title">Submission Template</h2>
+                    <p class="st-subtitle">Configure stages for this job's candidate submission</p>
+                </div>
+            </div>
+            <div class="st-header-right">
+                <template if:true={isDirty}>
+                    <span class="st-unsaved-badge">Unsaved changes</span>
+                </template>
+                <lightning-button
+                    label="Reset"
+                    onclick={handleReset}
+                    disabled={isSaving}>
+                </lightning-button>
+                <lightning-button
+                    label="Save Template"
+                    variant="brand"
+                    onclick={handleSave}
+                    disabled={isSaving}>
+                </lightning-button>
+            </div>
+        </div>
+
+        <template if:true={isSaving}>
+            <div class="st-saving-bar">
+                <lightning-spinner size="x-small" alternative-text="Saving..."></lightning-spinner>
+                <span>Saving template...</span>
+            </div>
+        </template>
+
+        <template if:true={isLoading}>
+            <div class="st-loading">
+                <lightning-spinner size="medium" alternative-text="Loading..."></lightning-spinner>
+                <p>Loading template...</p>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <!-- Stage Grid Header -->
+            <div class="st-grid-header">
+                <div class="st-col-stage">Stage</div>
+                <div class="st-col-index">Order / Index</div>
+                <div class="st-col-required">Required</div>
+                <div class="st-col-active">Active</div>
+                <div class="st-col-status">Status</div>
+            </div>
+
+            <!-- Stage Rows -->
+            <div class="st-grid-body">
+                <template for:each={stages} for:item="stage">
+                    <div key={stage.key} class={stage.rowClass}>
+
+                        <!-- Stage Name -->
+                        <div class="st-col-stage">
+                            <div class="st-stage-name-wrap">
+                                <div class="st-stage-dot" data-key={stage.key}></div>
+                                <div class="st-stage-info">
+                                    <span class="st-stage-label">{stage.label}</span>
+                                    <span class="st-stage-key">{stage.key}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Index -->
+                        <div class="st-col-index">
+                            <div class="st-index-controls">
+                                <button
+                                    class="st-index-btn"
+                                    data-key={stage.key}
+                                    data-dir="up"
+                                    onclick={handleMoveStage}
+                                    disabled={stage.isFirst}
+                                    title="Move up">
+                                    <lightning-icon icon-name="utility:chevronup" size="xx-small"></lightning-icon>
+                                </button>
+                                <span class="st-index-value">{stage.index}</span>
+                                <button
+                                    class="st-index-btn"
+                                    data-key={stage.key}
+                                    data-dir="down"
+                                    onclick={handleMoveStage}
+                                    disabled={stage.isLast}
+                                    title="Move down">
+                                    <lightning-icon icon-name="utility:chevrondown" size="xx-small"></lightning-icon>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Required -->
+                        <div class="st-col-required">
+                            <div
+                                class={stage.requiredToggleClass}
+                                data-key={stage.key}
+                                data-field="isRequired"
+                                onclick={handleToggle}
+                                role="switch"
+                                aria-checked={stage.isRequiredStr}
+                                tabindex="0">
+                                <div class="st-toggle-knob"></div>
+                            </div>
+                            <span class="st-toggle-label">{stage.requiredLabel}</span>
+                        </div>
+
+                        <!-- Active -->
+                        <div class="st-col-active">
+                            <div
+                                class={stage.activeToggleClass}
+                                data-key={stage.key}
+                                data-field="isActive"
+                                onclick={handleToggle}
+                                role="switch"
+                                aria-checked={stage.isActiveStr}
+                                tabindex="0">
+                                <div class="st-toggle-knob"></div>
+                            </div>
+                            <span class="st-toggle-label">{stage.activeLabel}</span>
+                        </div>
+
+                        <!-- Status Badge -->
+                        <div class="st-col-status">
+                            <span class={stage.badgeClass}>{stage.badgeLabel}</span>
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+
+            <!-- Summary Footer -->
+            <div class="st-footer">
+                <div class="st-footer-stat">
+                    <span class="st-footer-num">{activeCount}</span>
+                    <span class="st-footer-label">Active stages</span>
+                </div>
+                <div class="st-footer-divider"></div>
+                <div class="st-footer-stat">
+                    <span class="st-footer-num">{requiredCount}</span>
+                    <span class="st-footer-label">Required stages</span>
+                </div>
+                <div class="st-footer-divider"></div>
+                <div class="st-footer-stat">
+                    <span class="st-footer-num">{totalCount}</span>
+                    <span class="st-footer-label">Total stages</span>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
