@@ -1,36 +1,105 @@
-import { LightningElement, api, track, wire } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { CloseActionScreenEvent } from 'lightning/actions'; // <-- ADD THIS LINE
+
+// Apex methods
 import getSubmissionTemplate from '@salesforce/apex/SubmissionTemplateController.getSubmissionTemplate';
 import saveSubmissionTemplate from '@salesforce/apex/SubmissionTemplateController.saveSubmissionTemplate';
-
-const ALL_STAGES = [
-    { key: 'Resume',          label: 'Resume' },
-    { key: 'References',      label: 'References' },
-    { key: 'BLS_Card',        label: 'BLS Card' },
-    { key: 'ACLS_Card',       label: 'ACLS Card' },
-    { key: 'Skills_Checklist',label: 'Skills Checklist' },
-    { key: 'Credentials',     label: 'Credentials' }
-];
+import getAllStageConfigs from '@salesforce/apex/SubmissionTemplateController.getAllStageConfigs'; 
 
 export default class JobSubmissionTemplate extends LightningElement {
-    @api recordId; // Job record Id
+    
+    // ─── MAGIC GETTER/SETTER: Waits for the Quick Action to pass the ID ───────
+    _recordId;
+    
+    @api 
+    get recordId() {
+        return this._recordId;
+    }
+    set recordId(value) {
+        if (value) {
+            this._recordId = value;
+            console.log('ID securely received from Salesforce:', this._recordId);
+            this.loadData(); // Only load the data AFTER the ID is successfully captured!
+        }
+    }
 
-    @track stageData = [];
+    // Notice we COMPLETELY DELETED connectedCallback()!
+
+    // ─── State Management ─────────────────────────────────────────────────────
+    @track canvasData = [];  
+    @track paletteData = []; 
+    
+    @track isModalOpen = false;
     @track isLoading = true;
     @track isSaving = false;
     @track isDirty = false;
 
-    _originalData = [];
+    _originalCanvasData = [];
+    _allConfigsMap = {}; 
+    
+    // Drag & Drop tracking
+    _draggedKey = null;
 
-    connectedCallback() {
-        this.loadTemplate();
-    }
+    // ─── Data Loading ─────────────────────────────────────────────────────────
 
-    async loadTemplate() {
+    async loadData() {
         this.isLoading = true;
         try {
-            const result = await getSubmissionTemplate({ jobId: this.recordId });
-            this.initStages(result);
+            // Because of the setter above, this.recordId is guaranteed to exist now
+            const [configs, savedStages] = await Promise.all([
+                getAllStageConfigs(),
+                getSubmissionTemplate({ jobId: this.recordId }) 
+            ]);
+
+            // 1. Build the Master Dictionary Map
+            this._allConfigsMap = {};
+            (configs || []).forEach(config => {
+                this._allConfigsMap[config.stageKey] = config;
+            });
+
+            // 2. Build the Initial Canvas
+            let loadedCanvas = [];
+            let savedKeys = new Set();
+
+            (savedStages || []).forEach(saved => {
+                const config = this._allConfigsMap[saved.stageKey];
+                if (config && saved.isActive) {
+                    savedKeys.add(saved.stageKey);
+                    const isLocked = config.isDefaultRequired;
+                    
+                    loadedCanvas.push({
+                        key: saved.stageKey,
+                        label: config.label,
+                        iconName: config.iconName,
+                        index: saved.stageIndex,
+                        isRequired: isLocked ? true : saved.isRequired,
+                        isLocked: isLocked
+                    });
+                }
+            });
+
+            // 3. Enforce Mandatory Defaults
+            Object.values(this._allConfigsMap).forEach(config => {
+                if (config.isDefaultRequired && !savedKeys.has(config.stageKey)) {
+                    loadedCanvas.push({
+                        key: config.stageKey,
+                        label: config.label,
+                        iconName: config.iconName,
+                        index: 999, 
+                        isRequired: true,
+                        isLocked: true
+                    });
+                }
+            });
+
+            loadedCanvas.sort((a, b) => a.index - b.index);
+            this.canvasData = loadedCanvas;
+            this.reindexCanvas();
+
+            this._originalCanvasData = JSON.stringify(this.canvasData);
+            this.isDirty = false;
+
         } catch (error) {
             this.showToast('Error', this.getErrorMessage(error), 'error');
         } finally {
@@ -38,134 +107,203 @@ export default class JobSubmissionTemplate extends LightningElement {
         }
     }
 
-    initStages(savedStages) {
-        // savedStages is a list of wrapper objects from Apex:
-        // { stageKey, index, isRequired, isActive }
-        const savedMap = {};
-        (savedStages || []).forEach(s => { savedMap[s.stageKey] = s; });
+    // ─── Getters for HTML ─────────────────────────────────────────────────────
+    
+    get isCanvasEmpty() { return this.canvasData.length === 0; }
+    get paletteStages() { return this.paletteData; }
+    get totalCount()    { return this.canvasData.length; }
+    get requiredCount() { return this.canvasData.filter(s => s.isRequired).length; }
 
-        this.stageData = ALL_STAGES.map((stage, i) => {
-            const saved = savedMap[stage.key];
-            return {
-                key: stage.key,
-                label: stage.label,
-                index: saved ? saved.stageIndex : (i + 1),
-                isRequired: saved ? saved.isRequired : false,
-                isActive: saved ? saved.isActive : false
-            };
-        });
-
-        // Sort by saved index
-        this.stageData.sort((a, b) => a.index - b.index);
-        this.reindex();
-        this._originalData = JSON.stringify(this.stageData);
-        this.isDirty = false;
-    }
-
-    reindex() {
-        this.stageData = this.stageData.map((s, i) => ({ ...s, index: i + 1 }));
-    }
-
-    get stages() {
-        const total = this.stageData.length;
-        return this.stageData.map((s, i) => {
-            const isActive = s.isActive;
-            const isRequired = s.isRequired;
-            let badgeClass = 'st-badge ';
-            let badgeLabel = '';
-            if (isActive && isRequired) {
-                badgeClass += 'st-badge--active-required';
-                badgeLabel = 'Active · Required';
-            } else if (isActive && !isRequired) {
-                badgeClass += 'st-badge--active-optional';
-                badgeLabel = 'Active · Optional';
-            } else {
-                badgeClass += 'st-badge--inactive';
-                badgeLabel = 'Inactive';
-            }
+    get canvasStages() {
+        const total = this.canvasData.length;
+        return this.canvasData.map((s, i) => {
             return {
                 ...s,
                 isFirst: i === 0,
                 isLast: i === total - 1,
-                rowClass: isActive ? 'st-stage-row st-stage-row--active' : 'st-stage-row st-stage-row--inactive',
-                requiredToggleClass: isRequired ? 'st-toggle st-toggle--on' : 'st-toggle',
-                activeToggleClass: isActive ? 'st-toggle st-toggle--on' : 'st-toggle',
-                requiredLabel: isRequired ? 'Yes' : 'No',
-                activeLabel: isActive ? 'On' : 'Off',
-                isRequiredStr: String(isRequired),
-                isActiveStr: String(isActive),
-                badgeClass,
-                badgeLabel
+                rowClass: 'st-stage-row st-stage-row--active',
+                requiredToggleClass: s.isRequired ? 'st-toggle st-toggle--on' : 'st-toggle',
+                requiredLabel: s.isRequired ? 'Yes' : 'No',
+                isRequiredStr: String(s.isRequired)
             };
         });
     }
 
-    get activeCount() {
-        return this.stageData.filter(s => s.isActive).length;
+    // ─── Drag and Drop Logic ──────────────────────────────────────────────────
+    
+    handleDragStart(event) {
+        this._draggedKey = event.currentTarget.dataset.key;
+        event.dataTransfer.effectAllowed = 'move';
+        event.currentTarget.classList.add('st-row-dragging');
     }
 
-    get requiredCount() {
-        return this.stageData.filter(s => s.isRequired).length;
+    handleDragOver(event) {
+        event.preventDefault(); 
+        event.dataTransfer.dropEffect = 'move';
+        const currentTarget = event.currentTarget;
+        if (currentTarget.dataset.key !== this._draggedKey) {
+            currentTarget.classList.add('st-row-drag-over');
+        }
     }
 
-    get totalCount() {
-        return this.stageData.length;
+    handleDragLeave(event) {
+        event.currentTarget.classList.remove('st-row-drag-over');
     }
 
-    handleToggle(event) {
+    handleDrop(event) {
+        event.preventDefault();
+        event.currentTarget.classList.remove('st-row-drag-over');
+        
+        const droppedKey = event.currentTarget.dataset.key;
+
+        if (this._draggedKey && this._draggedKey !== droppedKey) {
+            const draggedIdx = this.canvasData.findIndex(s => s.key === this._draggedKey);
+            const droppedIdx = this.canvasData.findIndex(s => s.key === droppedKey);
+
+            if (draggedIdx > -1 && droppedIdx > -1) {
+                const newData = [...this.canvasData];
+                const [draggedItem] = newData.splice(draggedIdx, 1);
+                newData.splice(droppedIdx, 0, draggedItem);
+
+                this.canvasData = newData;
+                this.reindexCanvas();
+                this.markDirty();
+            }
+        }
+        
+        this.cleanupDragStyles();
+        this._draggedKey = null;
+    }
+
+    handleDragOverContainer(event) {
+        event.preventDefault(); 
+    }
+
+    cleanupDragStyles() {
+        const rows = this.template.querySelectorAll('.st-stage-row');
+        rows.forEach(row => {
+            row.classList.remove('st-row-dragging');
+            row.classList.remove('st-row-drag-over');
+        });
+    }
+
+    // ─── Modal & Palette Logic ────────────────────────────────────────────────
+    
+    openSettingsModal() {
+        const canvasKeys = new Set(this.canvasData.map(s => s.key));
+        
+        this.paletteData = Object.values(this._allConfigsMap).map(config => {
+            const isLocked = config.isDefaultRequired;
+            const isSelected = isLocked || canvasKeys.has(config.stageKey);
+            
+            return {
+                key: config.stageKey,
+                label: config.label,
+                iconName: config.iconName,
+                isSelected: isSelected,
+                isLocked: isLocked, 
+                itemClass: isLocked ? 'st-palette-item st-palette-item--locked' : 'st-palette-item'
+            };
+        });
+
+        this.isModalOpen = true;
+    }
+
+    closeSettingsModal() {
+        this.isModalOpen = false;
+    }
+
+    handlePaletteSelection(event) {
         const key = event.currentTarget.dataset.key;
-        const field = event.currentTarget.dataset.field; // 'isRequired' or 'isActive'
-        this.stageData = this.stageData.map(s => {
-            if (s.key === key) {
-                const updated = { ...s, [field]: !s[field] };
-                // If activating, keep as-is. If deactivating, also turn off required
-                if (field === 'isActive' && !updated.isActive) {
-                    updated.isRequired = false;
-                }
-                return updated;
+        const isChecked = event.target.checked;
+        
+        this.paletteData = this.paletteData.map(item => {
+            if (item.key === key && !item.isLocked) { 
+                return { ...item, isSelected: isChecked };
+            }
+            return item;
+        });
+    }
+
+    applySettings() {
+        let newCanvas = [...this.canvasData];
+
+        this.paletteData.forEach(item => {
+            const existsOnCanvas = newCanvas.find(s => s.key === item.key);
+            
+            if (item.isSelected && !existsOnCanvas) {
+                const config = this._allConfigsMap[item.key];
+                newCanvas.push({
+                    key: config.stageKey,
+                    label: config.label,
+                    iconName: config.iconName,
+                    isRequired: config.isDefaultRequired || false,
+                    isLocked: config.isDefaultRequired
+                });
+            } 
+            else if (!item.isSelected && existsOnCanvas && !existsOnCanvas.isLocked) {
+                newCanvas = newCanvas.filter(s => s.key !== item.key);
+            }
+        });
+
+        this.canvasData = newCanvas;
+        this.reindexCanvas();
+        this.markDirty();
+        this.closeSettingsModal();
+    }
+
+    // ─── Canvas Grid Actions ──────────────────────────────────────────────────
+    
+    handleRemoveFromCanvas(event) {
+        const key = event.currentTarget.dataset.key;
+        const stage = this.canvasData.find(s => s.key === key);
+        if (stage && stage.isLocked) return;
+
+        this.canvasData = this.canvasData.filter(s => s.key !== key);
+        this.reindexCanvas();
+        this.markDirty();
+    }
+
+    handleToggleRequired(event) {
+        const key = event.currentTarget.dataset.key;
+        this.canvasData = this.canvasData.map(s => {
+            if (s.key === key && !s.isLocked) {
+                return { ...s, isRequired: !s.isRequired };
             }
             return s;
         });
         this.markDirty();
     }
 
-    handleMoveStage(event) {
-        event.stopPropagation();
-        const key = event.currentTarget.dataset.key;
-        const dir = event.currentTarget.dataset.dir; // 'up' or 'down'
-        const idx = this.stageData.findIndex(s => s.key === key);
-        if (idx === -1) return;
-        const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
-        if (swapIdx < 0 || swapIdx >= this.stageData.length) return;
-
-        const newData = [...this.stageData];
-        [newData[idx], newData[swapIdx]] = [newData[swapIdx], newData[idx]];
-        this.stageData = newData;
-        this.reindex();
-        this.markDirty();
-    }
-
+    // ─── Save & Reset ─────────────────────────────────────────────────────────
+    
     handleReset() {
-        this.stageData = JSON.parse(this._originalData);
+        this.canvasData = JSON.parse(this._originalCanvasData);
         this.isDirty = false;
     }
 
     async handleSave() {
         this.isSaving = true;
         try {
-            const payload = this.stageData.map(s => ({
+            const payload = this.canvasData.map(s => ({
                 stageKey: s.key,
                 stageIndex: s.index,
                 isRequired: s.isRequired,
-                isActive: s.isActive
+                isActive: true 
             }));
+
             await saveSubmissionTemplate({
                 jobId: this.recordId,
                 stagesJson: JSON.stringify(payload)
             });
-            this._originalData = JSON.stringify(this.stageData);
+
+            this._originalCanvasData = JSON.stringify(this.canvasData);
             this.isDirty = false;
             this.showToast('Success', 'Submission template saved successfully.', 'success');
+            
+            // <-- ADD THIS LINE to automatically close the popup window!
+            this.dispatchEvent(new CloseActionScreenEvent()); 
+
         } catch (error) {
             this.showToast('Error', this.getErrorMessage(error), 'error');
         } finally {
@@ -173,8 +311,14 @@ export default class JobSubmissionTemplate extends LightningElement {
         }
     }
 
+    // ─── Utilities ────────────────────────────────────────────────────────────
+    
+    reindexCanvas() {
+        this.canvasData = this.canvasData.map((s, i) => ({ ...s, index: i + 1 }));
+    }
+
     markDirty() {
-        this.isDirty = JSON.stringify(this.stageData) !== this._originalData;
+        this.isDirty = JSON.stringify(this.canvasData) !== this._originalCanvasData;
     }
 
     showToast(title, message, variant) {

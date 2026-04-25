@@ -4,9 +4,10 @@
     border-radius: 14px;
     overflow: hidden;
     font-family: inherit;
+    position: relative;
 }
 
-/* Header */
+/* ── Header ── */
 .st-header {
     display: flex;
     align-items: center;
@@ -68,7 +69,7 @@
     white-space: nowrap;
 }
 
-/* Saving bar */
+/* ── Status Bars ── */
 .st-saving-bar {
     display: flex;
     align-items: center;
@@ -81,7 +82,6 @@
     font-weight: 500;
 }
 
-/* Loading */
 .st-loading {
     display: flex;
     flex-direction: column;
@@ -93,10 +93,42 @@
     font-size: 0.85rem;
 }
 
-/* Grid Header */
+/* ── Empty State ── */
+.st-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    text-align: center;
+    background: #fdfdfd;
+}
+
+.st-empty-icon {
+    --sds-c-icon-color-foreground-default: #9ca3af;
+    margin-bottom: 16px;
+    transform: scale(1.2);
+}
+
+.st-empty-state h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 8px 0;
+}
+
+.st-empty-state p {
+    font-size: 0.85rem;
+    color: #6b7280;
+    max-width: 320px;
+    margin: 0 0 24px 0;
+    line-height: 1.4;
+}
+
+/* ── Grid Layout (The Canvas) ── */
 .st-grid-header {
     display: grid;
-    grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr;
+    grid-template-columns: 40px 2.5fr 1fr 1fr 80px; /* Added 40px for Drag Handle */
     padding: 10px 24px;
     background: #f3f4f6;
     border-bottom: 1px solid #e5e7eb;
@@ -111,21 +143,21 @@
     letter-spacing: 0.6px;
 }
 
-/* Grid Body */
 .st-grid-body {
     display: flex;
     flex-direction: column;
+    min-height: 50px; /* Ensures drop zone exists even if empty */
 }
 
-/* Stage Row */
 .st-stage-row {
     display: grid;
-    grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr;
+    grid-template-columns: 40px 2.5fr 1fr 1fr 80px; /* Added 40px for Drag Handle */
     align-items: center;
     padding: 14px 24px;
     gap: 12px;
     border-bottom: 1px solid #f3f4f6;
-    transition: background 0.15s;
+    transition: background 0.15s, border-top 0.15s;
+    background: #ffffff;
 }
 
 .st-stage-row:last-child {
@@ -136,32 +168,51 @@
     background: #f9fafb;
 }
 
-.st-stage-row--inactive {
-    opacity: 0.55;
+/* ── Drag & Drop States ── */
+.st-col-drag {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    cursor: grab;
 }
 
-.st-stage-row--active {
-    background: #ffffff;
+.st-col-drag:active {
+    cursor: grabbing;
 }
 
-/* Stage name cell */
+.st-drag-icon {
+    --sds-c-icon-color-foreground-default: #d1d5db;
+    transition: transform 0.2s;
+}
+
+.st-stage-row:hover .st-drag-icon {
+    --sds-c-icon-color-foreground-default: #9ca3af;
+}
+
+/* When the user is actively dragging the row */
+.st-row-dragging {
+    opacity: 0.4;
+    background: #f3f4f6 !important;
+}
+
+/* When dragging OVER another row */
+.st-row-drag-over {
+    border-top: 3px solid #2563eb;
+    background: #eff6ff !important;
+}
+
+/* ── Stage Cell ── */
 .st-stage-name-wrap {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.st-stage-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #d1d5db;
-    flex-shrink: 0;
-    transition: background 0.2s;
-}
-
-.st-stage-row--active .st-stage-dot {
-    background: #2563eb;
+.st-stage-icon {
+    --sds-c-icon-color-foreground-default: #2563eb;
+    background: #eff6ff;
+    padding: 6px;
+    border-radius: 8px;
 }
 
 .st-stage-info {
@@ -187,51 +238,24 @@
     letter-spacing: 0.3px;
 }
 
-/* Index controls */
-.st-index-controls {
+/* ── Index (Read-Only now) ── */
+.st-col-index {
     display: flex;
     align-items: center;
-    gap: 8px;
-}
-
-.st-index-btn {
-    width: 26px;
-    height: 26px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: background 0.15s, border-color 0.15s;
-    flex-shrink: 0;
-}
-
-.st-index-btn:hover:not(:disabled) {
-    background: #eff6ff;
-    border-color: #93c5fd;
-}
-
-.st-index-btn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-}
-
-.st-index-btn :global(.slds-icon) {
-    --sds-c-icon-color-foreground-default: #4b5563;
 }
 
 .st-index-value {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    color: #374151;
-    min-width: 20px;
+    color: #4b5563;
+    min-width: 24px;
     text-align: center;
+    background: #f3f4f6;
+    padding: 4px 0;
+    border-radius: 6px;
 }
 
-/* Toggle */
+/* ── Toggles & Locked States ── */
 .st-toggle {
     width: 40px;
     height: 22px;
@@ -253,6 +277,11 @@
     background: #2563eb;
 }
 
+.st-toggle--disabled {
+    background: #93c5fd; /* Light blue to indicate it's on but disabled */
+    cursor: not-allowed;
+}
+
 .st-toggle-knob {
     position: absolute;
     top: 3px;
@@ -270,8 +299,7 @@
     transform: translateX(18px);
 }
 
-.st-col-required,
-.st-col-active {
+.st-col-required, .st-col-actions {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -283,33 +311,22 @@
     white-space: nowrap;
 }
 
-/* Status badge */
-.st-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.68rem;
-    font-weight: 700;
-    white-space: nowrap;
+/* ── Actions / Icons ── */
+.st-delete-btn :global(.slds-icon) {
+    --sds-c-icon-color-foreground-default: #9ca3af;
+    transition: fill 0.2s;
 }
 
-.st-badge--active-required {
-    background: #dcfce7;
-    color: #15803d;
+.st-delete-btn:hover :global(.slds-icon) {
+    --sds-c-icon-color-foreground-default: #ef4444; 
 }
 
-.st-badge--active-optional {
-    background: #dbeafe;
-    color: #1d4ed8;
+.st-locked-icon {
+    --sds-c-icon-color-foreground-default: #d1d5db;
+    margin-left: 8px;
 }
 
-.st-badge--inactive {
-    background: #f3f4f6;
-    color: #6b7280;
-}
-
-/* Footer */
+/* ── Footer ── */
 .st-footer {
     display: flex;
     align-items: center;
@@ -351,12 +368,189 @@
     background: #e5e7eb;
 }
 
-/* Column alignment helpers */
-.st-col-stage,
-.st-col-index,
-.st-col-required,
-.st-col-active,
-.st-col-status {
+/* ── Settings Modal (The Palette) ── */
+/* ── Settings Modal (The Palette) ── */
+.st-modal-backdrop {
+    position: absolute; 
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* A sophisticated, subtle slate-gray tint (provides contrast without being pitch black) */
+    background: rgba(71, 85, 105, 0.35); 
+    z-index: 9000;
     display: flex;
     align-items: center;
+    justify-content: center;
+    /* Stronger blur to separate the background elements from the modal */
+    backdrop-filter: blur(5px);
+    border-radius: 14px; 
+}
+
+.st-modal {
+    background: #ffffff;
+    width: 92%; 
+    max-width: 500px;
+    border-radius: 12px;
+    /* Crisp, layered shadow + an inner white glow to make it lift off the background */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 
+                0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    /* Subtle border to give the white modal a perfectly defined edge */
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    display: flex;
+    flex-direction: column;
+    max-height: 85%;
+}
+
+.st-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.st-modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.st-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.st-modal-close:hover {
+    background: #f3f4f6;
+}
+
+.st-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+}
+
+.st-modal-desc {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+.st-palette-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.st-palette-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #ffffff;
+}
+
+.st-palette-item:hover:not(.st-palette-item--locked) {
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+/* Locked Palette Item (Mandatory Default) */
+.st-palette-item--locked {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.st-palette-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+.st-palette-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.st-palette-icon {
+    --sds-c-icon-color-foreground-default: #6b7280;
+}
+
+.st-palette-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.st-palette-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.st-locked-badge {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    font-weight: 500;
+    margin-left: 6px;
+}
+
+.st-palette-key {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    font-family: monospace;
+}
+
+.st-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 0 0 12px 12px;
+}
+
+.st-modal-cancel {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.st-modal-cancel:hover {
+    background: #f3f4f6;
+}
+
+.st-modal-proceed {
+    background: #2563eb;
+    border: 1px solid #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.st-modal-proceed:hover {
+    background: #1d4ed8;
 }

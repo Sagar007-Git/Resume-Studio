@@ -1,0 +1,201 @@
+<template>
+    <c-candidate-submission-stage-base stage-key="Review">
+        <div class="cs-review-wrap">
+            <div class={reviewGridClass}>
+                <template if:false={isReviewDetailsCollapsed}>
+                    <div class="cs-review-col">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;">
+                        </div>
+                        <div class="cs-checklist slds-m-bottom_medium">
+                            <template for:each={reviewStagesList} for:item="stage">
+                                <div key={stage.id} class={stage.rowClass}>
+                                    <div class="cs-stage-left">
+                                        <lightning-icon icon-name={stage.iconName} size="x-small" variant={stage.iconVariant}></lightning-icon>
+                                        <span class="cs-stage-name">{stage.name}</span>
+                                    </div>
+                                    <span class={stage.statusClass}>{stage.statusLabel}</span>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Documents panel header with Combine toggle -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                            <p class="cs-panel-header" style="margin: 0;">{documentsListLabel}</p>
+                            <div class="cs-combine-toggle-wrap" title={combineToggleTooltip}>
+                                <span class="cs-combine-label">Combine PDFs</span>
+                                <label class="cs-toggle-switch">
+                                    <input type="checkbox" checked={isCombineEnabled} onchange={handleCombineToggle} />
+                                    <span class="cs-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="cs-final-docs-panel" style="padding: 10px;">
+                            <template if:true={selectedFilesForReview.length}>
+
+                                <!-- COMBINE ON: draggable ordered list -->
+                                <template if:true={isCombineEnabled}>
+                                    <div class="cs-capsule-list">
+                                        <template for:each={selectedFilesForReview} for:item="doc" for:index="index">
+                                            <div class="cs-file-capsule cs-file-capsule--draggable"
+                                                 key={doc.contentDocumentId}
+                                                 data-id={doc.contentDocumentId}
+                                                 data-index={index}
+                                                 draggable="true"
+                                                 ondragstart={handleDragStart}
+                                                 ondragover={handleDragOver}
+                                                 ondrop={handleDrop}>
+                                                <lightning-icon icon-name="utility:drag_and_drop" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                <lightning-icon icon-name="doctype:pdf" size="xx-small"></lightning-icon>
+                                                <span style="flex: 1; margin-left: 6px;">{doc.title}.{doc.extension}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <!-- COMBINE OFF: static list with Separate badge -->
+                                <template if:false={isCombineEnabled}>
+                                    <div class="cs-capsule-list">
+                                        <template for:each={selectedFilesForReview} for:item="doc">
+                                            <div class="cs-file-capsule cs-file-capsule--separate" key={doc.contentDocumentId}>
+                                                <lightning-icon icon-name="doctype:pdf" size="xx-small"></lightning-icon>
+                                                <span style="flex: 1; margin-left: 6px;">{doc.title}.{doc.extension}</span>
+                                                <span class="cs-separate-badge">Separate</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                            </template>
+                            <template if:false={selectedFilesForReview.length}>
+                                <div class="cs-empty-state-sm">
+                                    <lightning-icon icon-name="utility:info_alt" size="small"></lightning-icon>
+                                    <p>No documents selected for this package.</p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- RIGHT COLUMN: Preview -->
+                <div class="cs-review-col">
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 3px;">
+                        <lightning-button-icon
+                            icon-name={reviewCollapseButtonIcon}
+                            alternative-text={reviewCollapseButtonTitle}
+                            title={reviewCollapseButtonTitle}
+                            onclick={handleToggleReviewDetails}
+                            class="cs-collapse-toggle"
+                            variant="border-filled"
+                            size="small">
+                        </lightning-button-icon>
+                    </div>
+
+                    <div class="cs-preview-mock-page" style="padding: 12px; min-height: 500px; height: 100%; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fafafa; display: flex; flex-direction: column;">
+                        <template if:true={selectedFilesForReview.length}>
+
+                            <!-- Merging spinner (only relevant when combine is ON) -->
+                            <template if:true={isMergingPdfs}>
+                                <div style="margin-bottom: 12px; border-bottom: 1px solid #d3d3d3; padding-bottom: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; color: #4b5563; font-size: 0.82rem;">
+                                        <lightning-spinner size="small" alternative-text="Refreshing merged preview"></lightning-spinner>
+                                        <span>Refreshing merged preview...</span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template if:true={mergePdfError}>
+                                <div style="color: #c23030; margin-bottom: 12px; padding: 8px; background: #fef2f1; border-radius: 4px;">
+                                    {mergePdfError}
+                                </div>
+                            </template>
+
+                            <!-- COMBINE ON: merged PDF iframe -->
+                            <template if:true={isCombineEnabled}>
+                                <template if:true={mergedPdfPreviewUrl}>
+                                    <div style="flex: 1; border-radius: 6px; border: 1px solid #e5e7eb; overflow: hidden;">
+                                        <iframe src={mergedPdfPreviewUrl} style="width: 100%; height: 100%; border: none; border-radius: 6px;" title="Merged PDF Preview"></iframe>
+                                    </div>
+                                </template>
+                                <template if:false={mergedPdfPreviewUrl}>
+                                    <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: white; border-radius: 6px; border: 1px solid #e5e7eb; color: #9ca3af;">
+                                        <div class="slds-text-align_center">
+                                            <lightning-icon icon-name="doctype:pdf" size="large" class="slds-m-bottom_small"></lightning-icon>
+                                            <p>Merged preview will appear automatically.</p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+
+                            <!-- COMBINE OFF: carousel -->
+                            <template if:false={isCombineEnabled}>
+                                <div class="cs-carousel-wrap">
+
+                                    <!-- Loading state -->
+                                    <template if:true={isLoadingPreviews}>
+                                        <div class="cs-carousel-loading">
+                                            <lightning-spinner size="medium" alternative-text="Loading previews"></lightning-spinner>
+                                            <p style="margin: 14px 0 0; font-size: 0.82rem; color: #6b7280;">Loading previews...</p>
+                                        </div>
+                                    </template>
+
+                                    <template if:false={isLoadingPreviews}>
+
+                                        <!-- Header: filename + arrow nav -->
+                                        <div class="cs-carousel-header">
+                                            <div class="cs-carousel-file-info">
+                                                <lightning-icon icon-name="doctype:pdf" size="xx-small"></lightning-icon>
+                                                <span class="cs-carousel-filename">{currentCarouselFile.title}.{currentCarouselFile.extension}</span>
+                                            </div>
+                                            <div class="cs-carousel-nav">
+                                                <span class="cs-carousel-counter">{carouselCounterLabel}</span>
+                                                <button class="cs-carousel-btn" onclick={handleCarouselPrev} disabled={isCarouselAtStart} title="Previous">&#8249;</button>
+                                                <button class="cs-carousel-btn" onclick={handleCarouselNext} disabled={isCarouselAtEnd} title="Next">&#8250;</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- iframe -->
+                                        <div class="cs-carousel-iframe-wrap">
+                                            <template if:true={currentCarouselFile.previewUrl}>
+                                                <iframe
+                                                    src={currentCarouselFile.previewUrl}
+                                                    class="cs-carousel-iframe"
+                                                    title={currentCarouselFile.title}>
+                                                </iframe>
+                                            </template>
+                                            <template if:false={currentCarouselFile.previewUrl}>
+                                                <div class="cs-carousel-no-preview">
+                                                    <lightning-icon icon-name="utility:warning" size="small"></lightning-icon>
+                                                    <p>Preview not available for this file.</p>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Dot indicators -->
+                                        <div class="cs-carousel-dots">
+                                            <template for:each={carouselDots} for:item="dot">
+                                                <span key={dot.index} class={dot.dotClass} data-index={dot.index} onclick={handleDotClick}></span>
+                                            </template>
+                                        </div>
+
+                                    </template>
+                                </div>
+                            </template>
+
+                        </template>
+
+                        <template if:false={selectedFilesForReview.length}>
+                            <div style="height: 500px; display: flex; align-items: center; justify-content: center; color: #9ca3af;">
+                                <div class="slds-text-align_center">
+                                    <lightning-icon icon-name="utility:inbox" size="large"></lightning-icon>
+                                    <p class="slds-m-top_small">No files selected yet. Go back to add files to your submission.</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </c-candidate-submission-stage-base>
+</template>

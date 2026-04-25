@@ -535,14 +535,14 @@ public with sharing class CandidateSubmissionController {
             sub.References__c       = 'None';
             sub.BLS_Card__c         = false;
             sub.ACLS_Card__c        = false;
-            sub.Skills_Checklist__c = false;
+            sub.Credentials__c      = false;
 
             if (stageStatus != null) {
                 if (stageStatus.get('References__c') != null)
                     sub.References__c = String.valueOf(stageStatus.get('References__c'));
                 sub.BLS_Card__c         = toBoolean(stageStatus.get('BLS_Card__c'));
                 sub.ACLS_Card__c        = toBoolean(stageStatus.get('ACLS_Card__c'));
-                sub.Skills_Checklist__c = toBoolean(stageStatus.get('Skills_Checklist__c'));
+                sub.Credentials__c      = toBoolean(stageStatus.get('Credentials__c'));
             }
 
             if (isUpdatingDraft) {

@@ -81,20 +81,81 @@ export default class CandidateSubmission extends LightningElement {
 
     // ─── Stage getters ────────────────────────────────────────────────────────
 
-    get isResumeStage()          { return this.currentStage === 'Resume'; }
-    get isReferencesStage()      { return this.currentStage === 'References'; }
-    get isBlsStage()             { return this.currentStage === 'BLS_Card'; }
-    get isAclsStage()            { return this.currentStage === 'ACLS_Card'; }
-    get isSkillsChecklistStage() { return this.currentStage === 'Skills_Checklist'; }
-    get isCredentialsStage()     { return this.currentStage === 'Credentials'; }
-    get isReviewStage()          { return this.currentStage === 'Review'; }
 
-    get tabsStickyClass() {
-        return this.hideHeader
-            ? 'cs-tabs-sticky cs-tabs-sticky--no-header'
-            : 'cs-tabs-sticky';
+    
+
+    // get isResumeStage()          { return this.currentStage === 'Resume'; }
+    // get isReferencesStage()      { return this.currentStage === 'References'; }
+    // get isBlsStage()             { return this.currentStage === 'BLS_Card'; }
+    // get isAclsStage()            { return this.currentStage === 'ACLS_Card'; }
+    // get isSkillsChecklistStage() { return this.currentStage === 'Skills_Checklist'; }
+    // get isCredentialsStage()     { return this.currentStage === 'Credentials'; }
+    // get isReviewStage()          { return this.currentStage === 'Review'; }
+
+    // get tabsStickyClass() {
+    //     return this.hideHeader
+    //         ? 'cs-tabs-sticky cs-tabs-sticky--no-header'
+    //         : 'cs-tabs-sticky';
+    // }
+
+    // get stagesWithMeta() {
+    //     const stageList  = this.stages || [];
+    //     const currentIdx = stageList.findIndex((s) => s.value === this.currentStage);
+
+    //     return stageList.map((s, idx) => {
+    //         const isPassed  = idx < currentIdx;
+    //         const isActive  = s.value === this.currentStage;
+
+    //         let isFilled = !!(this.submissionData.documents && this.submissionData.documents[s.value]);
+    //         if (s.value === 'Review') isFilled = false;
+
+    //         const isSkipped = isPassed && !isFilled && s.value !== 'Review';
+
+    //         let tabClass  = 'cs-tab';
+    //         let iconClass = 'cs-tab-icon';
+    //         if (isActive) {
+    //             tabClass  += ' cs-tab--active';
+    //             iconClass += ' cs-tab-icon--active';
+    //         } else if (isFilled) {
+    //             tabClass  += ' cs-tab--done';
+    //             iconClass += ' cs-tab-icon--done';
+    //         } else if (isSkipped) {
+    //             tabClass  += ' cs-tab--skipped';
+    //             iconClass += ' cs-tab-icon--skipped';
+    //         }
+
+    //         return { ...s, isDone: isFilled, isSkipped, isActive, tabClass, iconClass };
+    //     });
+    // }
+
+    // get blsExcludedDocIds()            { return this.getExcludedDocIdsFor('BLS_Card'); }
+    // get aclsExcludedDocIds()           { return this.getExcludedDocIdsFor('ACLS_Card'); }
+   
+    // get credentialsExcludedDocIds()    { return this.getExcludedDocIdsFor('Credentials'); }//
+
+    // ─── Stage getters (For HTML Switchboard) ─────────────────────────────────
+
+    get isStageResume()      { return this.currentStage === 'Resume'; }
+    get isStageReferences()  { return this.currentStage === 'References'; }
+    get isStageBls()         { return this.currentStage === 'BLS_Card'; }
+    get isStageAcls()        { return this.currentStage === 'ACLS_Card'; }
+    get isStageCredentials() { return this.currentStage === 'Credentials'; }
+    get isStageReview()      { return this.currentStage === 'Review'; }
+
+    // UNIVERSAL GETTERS: These feed the correct data to whatever child is currently active
+    get currentSelectedDocId() {
+        return this.submissionData.documents[this.currentStage] || null;
     }
 
+    get currentExcludedDocIds() {
+        return this.getExcludedDocIdsFor(this.currentStage);
+    }
+
+    get tabsStickyClass() {
+        return this.hideHeader ? 'cs-tabs-sticky cs-tabs-sticky--no-header' : 'cs-tabs-sticky';
+    }
+
+    // DO NOT DELETE: This builds your UI Tabs!
     get stagesWithMeta() {
         const stageList  = this.stages || [];
         const currentIdx = stageList.findIndex((s) => s.value === this.currentStage);
@@ -125,10 +186,7 @@ export default class CandidateSubmission extends LightningElement {
         });
     }
 
-    get blsExcludedDocIds()            { return this.getExcludedDocIdsFor('BLS_Card'); }
-    get aclsExcludedDocIds()           { return this.getExcludedDocIdsFor('ACLS_Card'); }
-   
-    get credentialsExcludedDocIds()    { return this.getExcludedDocIdsFor('Credentials'); }
+    // ─── Data loading ────────────────────────────────────────────────────────
 
     // ─── Data loading ────────────────────────────────────────────────────────
 
@@ -308,25 +366,52 @@ export default class CandidateSubmission extends LightningElement {
 
     // ─── Event handlers ───────────────────────────────────────────────────────
 
-    handleResumeSelectionChange(event) {
-        const selectedResumeId   = event.detail?.selectedResumeId || null;
-        const selectedResumeName = event.detail?.selectedResumeName || '';
+    // handleResumeSelectionChange(event) {
+    //     const selectedResumeId   = event.detail?.selectedResumeId || null;
+    //     const selectedResumeName = event.detail?.selectedResumeName || '';
 
-        this.submissionData = {
-            ...this.submissionData,
-            documents: { ...this.submissionData.documents, Resume: selectedResumeId }
-        };
+    //     this.submissionData = {
+    //         ...this.submissionData,
+    //         documents: { ...this.submissionData.documents, Resume: selectedResumeId }
+    //     };
 
-        this._preSelectedResumeId = selectedResumeId;
-        if (selectedResumeName) this.preSelectedResumeName = selectedResumeName;
+    //     this._preSelectedResumeId = selectedResumeId;
+    //     if (selectedResumeName) this.preSelectedResumeName = selectedResumeName;
 
-        // Draft persistence: save state when resume selection changes
-        this._persistDraftState();
-    }
+    //     // Draft persistence: save state when resume selection changes
+    //     this._persistDraftState();
+    // }
 
-    handleFileStageSelectionChange(event) {
-        const stageKey           = event.detail?.stageKey;
+    // handleFileStageSelectionChange(event) {
+    //     const stageKey           = event.detail?.stageKey;
+    //     const selectedDocumentId = event.detail?.selectedDocumentId || null;
+    //     if (!stageKey) return;
+
+    //     const nextStageStatus = { ...this.submissionData.stageStatus };
+    //     const statusKey       = stageKey.endsWith('__c') ? stageKey : stageKey + '__c';
+
+    //     if (stageKey.includes('References')) {
+    //         nextStageStatus[statusKey] = selectedDocumentId ? 'Completed' : 'None';
+    //     } else {
+    //         nextStageStatus[statusKey] = !!selectedDocumentId;
+    //     }
+
+    //     this.submissionData = {
+    //         ...this.submissionData,
+    //         documents:   { ...this.submissionData.documents, [stageKey]: selectedDocumentId },
+    //         stageStatus: nextStageStatus
+    //     };
+
+    //     // Draft persistence: save state when any stage selection changes
+    //     this._persistDraftState();
+    // }
+
+    // ─── Event handlers ───────────────────────────────────────────────────────
+
+    handleUniversalSelectionChange(event) {
+        const stageKey = event.detail?.stageKey;
         const selectedDocumentId = event.detail?.selectedDocumentId || null;
+        
         if (!stageKey) return;
 
         const nextStageStatus = { ...this.submissionData.stageStatus };
@@ -344,8 +429,26 @@ export default class CandidateSubmission extends LightningElement {
             stageStatus: nextStageStatus
         };
 
-        // Draft persistence: save state when any stage selection changes
+        // Specific tracking for Resume stage
+        if (stageKey === 'Resume') {
+            this._preSelectedResumeId = selectedDocumentId;
+            if (event.detail.selectedResumeName) {
+                this.preSelectedResumeName = event.detail.selectedResumeName;
+            }
+        }
+
         this._persistDraftState();
+    }
+
+
+    // Helper to find the currently active child component on screen
+    getActiveChildComponent() {
+        return this.template.querySelector('c-candidate-submission-stage-resume') ||
+               this.template.querySelector('c-candidate-submission-stage-references') ||
+               this.template.querySelector('c-candidate-submission-stage-bls-card') ||
+               this.template.querySelector('c-candidate-submission-stage-acls-card') ||
+               this.template.querySelector('c-candidate-submission-stage-credentials') ||
+               this.template.querySelector('c-candidate-submission-stage-review');
     }
 
     handleReviewMergedChange(event) {
@@ -366,18 +469,51 @@ export default class CandidateSubmission extends LightningElement {
 
     // ─── Navigation ──────────────────────────────────────────────────────────
 
+    // async handleNext() {
+    //     const stageList = this.stages || [];
+    //     const idx       = stageList.findIndex((s) => s.value === this.currentStage);
+
+    //     if (this.currentStage === 'Resume') {
+    //         const resumeCmp = this.template.querySelector('c-candidate-submission-stage-resume');
+    //         if (resumeCmp && typeof resumeCmp.validateAndSave === 'function') {
+    //             this.isLoading    = true;
+    //             const isValid     = await resumeCmp.validateAndSave();
+    //             this.isLoading    = false;
+    //             if (!isValid) return;
+    //         }
+    //     }
+
+    //     if (idx >= 0) {
+    //         const currentStageObj = stageList[idx];
+    //         if (currentStageObj.isRequired) {
+    //             const isFilled = !!this.submissionData.documents[currentStageObj.value];
+    //             if (!isFilled) {
+    //                 this.showToast('Required Stage', `${currentStageObj.label} is required.`, 'warning');
+    //                 return;
+    //             }
+    //         }
+    //     }
+
+    //     if (idx < stageList.length - 1) {
+    //         this.currentStage = stageList[idx + 1].value;
+    //         this.scrollToStageTop();
+    //         // Draft persistence: save current stage on navigation
+    //         this._persistDraftState();
+    //     }
+    // }
+
     async handleNext() {
         const stageList = this.stages || [];
         const idx       = stageList.findIndex((s) => s.value === this.currentStage);
 
-        if (this.currentStage === 'Resume') {
-            const resumeCmp = this.template.querySelector('c-candidate-submission-stage-resume');
-            if (resumeCmp && typeof resumeCmp.validateAndSave === 'function') {
-                this.isLoading    = true;
-                const isValid     = await resumeCmp.validateAndSave();
-                this.isLoading    = false;
-                if (!isValid) return;
-            }
+        // Smart dynamic validation check
+        const activeComponent = this.getActiveChildComponent();
+        
+        if (activeComponent && typeof activeComponent.validateAndSave === 'function') {
+            this.isLoading = true;
+            const isValid  = await activeComponent.validateAndSave();
+            this.isLoading = false;
+            if (!isValid) return;
         }
 
         if (idx >= 0) {
@@ -394,10 +530,10 @@ export default class CandidateSubmission extends LightningElement {
         if (idx < stageList.length - 1) {
             this.currentStage = stageList[idx + 1].value;
             this.scrollToStageTop();
-            // Draft persistence: save current stage on navigation
             this._persistDraftState();
         }
     }
+    
 
     handlePrevious() {
         const stageList = this.stages || [];
@@ -427,28 +563,64 @@ export default class CandidateSubmission extends LightningElement {
 
     // ─── Submit flow ─────────────────────────────────────────────────────────
 
-    async handlePreSubmitCheck() {
-        const reviewCmp = this.template.querySelector('c-candidate-submission-stage-review');
+    // async handlePreSubmitCheck() {
+    //     const reviewCmp = this.template.querySelector('c-candidate-submission-stage-review');
 
-        if (reviewCmp) {
-            // Validate first
-            const validation = await reviewCmp.validateForSubmit();
-            if (!validation?.ok) {
-                this.showToast('PDF Required', validation?.errorMessage || 'Please use only PDF files.', 'error');
-                return;
+    //     if (reviewCmp) {
+    //         // Validate first
+    //         const validation = await reviewCmp.validateForSubmit();
+    //         if (!validation?.ok) {
+    //             this.showToast('PDF Required', validation?.errorMessage || 'Please use only PDF files.', 'error');
+    //             return;
+    //         }
+
+    //         // Pull the freshest state right now, before opening any modal.
+    //         if (typeof reviewCmp.getMergedChangeDetail === 'function') {
+    //             const latest = reviewCmp.getMergedChangeDetail();
+    //             this.mergedPdfAttachmentId = latest.mergedPdfAttachmentId;
+    //             this.isCombineEnabled      = latest.isCombineEnabled;
+    //             // FIX: always capture individualDocIds — review component always sends them now
+    //             this.individualDocIds      = latest.individualDocIds || [];
+
+    //             console.log('[Parent] handlePreSubmitCheck — refreshed from getMergedChangeDetail');
+    //             console.log('[Parent] handlePreSubmitCheck — isCombineEnabled:', this.isCombineEnabled);
+    //             console.log('[Parent] handlePreSubmitCheck — individualDocIds:', JSON.stringify(this.individualDocIds));
+    //         }
+    //     }
+
+    //     const d       = this.submissionData.documents;
+    //     const missing = [];
+    //     this.stages.forEach((s) => {
+    //         if (s.isRequired && s.value !== 'Review' && !d[s.value]) {
+    //             missing.push(s.label);
+    //         }
+    //     });
+
+    //     if (missing.length > 0) {
+    //         this.missingItems        = missing;
+    //         this.showValidationModal = true;
+    //     } else {
+    //         this.showAccountManagerModal = true;
+    //     }
+    // }
+
+    async handlePreSubmitCheck() {
+        const activeComponent = this.getActiveChildComponent();
+
+        if (this.currentStage === 'Review' && activeComponent) {
+            if (typeof activeComponent.validateForSubmit === 'function') {
+                const validation = await activeComponent.validateForSubmit();
+                if (!validation?.ok) {
+                    this.showToast('PDF Required', validation?.errorMessage || 'Please use only PDF files.', 'error');
+                    return;
+                }
             }
 
-            // Pull the freshest state right now, before opening any modal.
-            if (typeof reviewCmp.getMergedChangeDetail === 'function') {
-                const latest = reviewCmp.getMergedChangeDetail();
+            if (typeof activeComponent.getMergedChangeDetail === 'function') {
+                const latest = activeComponent.getMergedChangeDetail();
                 this.mergedPdfAttachmentId = latest.mergedPdfAttachmentId;
                 this.isCombineEnabled      = latest.isCombineEnabled;
-                // FIX: always capture individualDocIds — review component always sends them now
                 this.individualDocIds      = latest.individualDocIds || [];
-
-                console.log('[Parent] handlePreSubmitCheck — refreshed from getMergedChangeDetail');
-                console.log('[Parent] handlePreSubmitCheck — isCombineEnabled:', this.isCombineEnabled);
-                console.log('[Parent] handlePreSubmitCheck — individualDocIds:', JSON.stringify(this.individualDocIds));
             }
         }
 

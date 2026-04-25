@@ -1,0 +1,421 @@
+/* ═══════════════════════════════════════════════════════════════
+   Candidate Submission Stage Review — Component Styles
+   ═══════════════════════════════════════════════════════════════ */
+
+.cs-review-wrap {
+    padding: 4px 0;
+}
+
+.cs-stage-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.cs-stage-heading--review {
+    margin-bottom: 20px;
+}
+
+/* ── Grid ────────────────────────────────────────────────────── */
+.cs-review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.cs-review-grid--split {
+    grid-template-columns: 1fr 1.5fr;
+}
+
+.cs-review-grid--expanded {
+    grid-template-columns: 1fr;
+}
+
+/* ── Panel header ────────────────────────────────────────────── */
+.cs-panel-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+    margin: 0 0 10px 0;
+}
+
+/* ── Stage checklist ─────────────────────────────────────────── */
+.cs-checklist {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.cs-check-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.cs-check-row:last-child {
+    border-bottom: none;
+}
+
+.cs-stage-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cs-stage-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.cs-check-row--missing .cs-stage-name {
+    color: #9ca3af;
+}
+
+.cs-status {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 9px;
+    border-radius: 5px;
+}
+
+.cs-status--success {
+    background: rgba(4, 132, 75, 0.08);
+    color: #04844b;
+}
+
+.cs-status--missing {
+    background: rgba(194, 57, 52, 0.06);
+    color: #c23934;
+}
+
+/* ── Combine toggle ──────────────────────────────────────────── */
+.cs-combine-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #f0f4ff;
+    border: 1px solid #c7d7ff;
+    border-radius: 20px;
+    cursor: default;
+    flex-shrink: 0;
+}
+
+.cs-combine-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+}
+
+.cs-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.cs-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.cs-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #cbd5e1;
+    border-radius: 18px;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.cs-toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 12px;
+    width: 12px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.cs-toggle-switch input:checked + .cs-toggle-slider {
+    background: #2563eb;
+}
+
+.cs-toggle-switch input:checked + .cs-toggle-slider::before {
+    transform: translateX(16px);
+}
+
+/* ── Documents panel ─────────────────────────────────────────── */
+.cs-final-docs-panel {
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 120px;
+}
+
+.cs-capsule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Base capsule */
+.cs-file-capsule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #374151;
+    width: 100%;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.cs-file-capsule span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Draggable variant (combine ON) */
+.cs-file-capsule--draggable {
+    cursor: grab;
+}
+
+.cs-file-capsule--draggable:active {
+    cursor: grabbing;
+}
+
+.cs-file-capsule--draggable:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Separate variant (combine OFF) */
+.cs-file-capsule--separate {
+    cursor: default;
+    background: #fafafa;
+    border-color: #e5e7eb;
+}
+
+.cs-separate-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #6366f1;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 2px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.cs-empty-state-sm {
+    text-align: center;
+    padding: 24px;
+    color: #9ca3af;
+}
+
+.cs-empty-state-sm p {
+    font-size: 0.78rem;
+    margin: 8px 0 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Carousel (Combine OFF — right preview column)
+   ═══════════════════════════════════════════════════════════════ */
+
+.cs-carousel-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Loading state */
+.cs-carousel-loading {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+}
+
+/* Header row: filename left, nav right */
+.cs-carousel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 4px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 10px;
+}
+
+.cs-carousel-file-info {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    flex: 1;
+}
+
+.cs-carousel-filename {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Nav: counter + arrow buttons */
+.cs-carousel-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.cs-carousel-counter {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    min-width: 36px;
+    text-align: center;
+}
+
+.cs-carousel-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    color: #374151;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    padding: 0;
+    user-select: none;
+}
+
+.cs-carousel-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    color: #111827;
+}
+
+.cs-carousel-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* iframe container */
+.cs-carousel-iframe-wrap {
+    flex: 1;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 440px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.cs-carousel-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    flex: 1;
+    min-height: 440px;
+    display: block;
+}
+
+/* No-preview fallback */
+.cs-carousel-no-preview {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    gap: 8px;
+    font-size: 0.82rem;
+}
+
+/* Dot indicators */
+.cs-carousel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 0 2px;
+}
+
+.cs-carousel-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #d1d5db;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    display: inline-block;
+}
+
+.cs-carousel-dot:hover {
+    background: #9ca3af;
+}
+
+.cs-carousel-dot--active {
+    background: #2563eb;
+    transform: scale(1.25);
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 700px) {
+    .cs-review-grid,
+    .cs-review-grid--split {
+        grid-template-columns: 1fr;
+    }
+
+    .cs-combine-toggle-wrap {
+        padding: 3px 8px;
+    }
+
+    .cs-combine-label {
+        font-size: 0.68rem;
+    }
+
+    .cs-carousel-iframe-wrap,
+    .cs-carousel-iframe {
+        min-height: 320px;
+    }
+}

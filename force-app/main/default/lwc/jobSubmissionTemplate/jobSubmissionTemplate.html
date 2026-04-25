@@ -7,24 +7,23 @@
                 </div>
                 <div>
                     <h2 class="st-title">Submission Template</h2>
-                    <p class="st-subtitle">Configure stages for this job's candidate submission</p>
+                    <p class="st-subtitle">Configure required documents and stages for this job</p>
                 </div>
             </div>
             <div class="st-header-right">
                 <template if:true={isDirty}>
                     <span class="st-unsaved-badge">Unsaved changes</span>
                 </template>
-                <lightning-button
-                    label="Reset"
-                    onclick={handleReset}
+                <lightning-button-icon 
+                    icon-name="utility:settings" 
+                    variant="border-filled" 
+                    alternative-text="Manage Requirements"
+                    title="Manage Requirements"
+                    onclick={openSettingsModal}
                     disabled={isSaving}>
-                </lightning-button>
-                <lightning-button
-                    label="Save Template"
-                    variant="brand"
-                    onclick={handleSave}
-                    disabled={isSaving}>
-                </lightning-button>
+                </lightning-button-icon>
+                <lightning-button label="Reset" onclick={handleReset} disabled={isSaving}></lightning-button>
+                <lightning-button label="Save Template" variant="brand" onclick={handleSave} disabled={isSaving}></lightning-button>
             </div>
         </div>
 
@@ -43,110 +42,132 @@
         </template>
 
         <template if:false={isLoading}>
-            <!-- Stage Grid Header -->
-            <div class="st-grid-header">
-                <div class="st-col-stage">Stage</div>
-                <div class="st-col-index">Order / Index</div>
-                <div class="st-col-required">Required</div>
-                <div class="st-col-active">Active</div>
-                <div class="st-col-status">Status</div>
-            </div>
+            
+            <template if:true={isCanvasEmpty}>
+                <div class="st-empty-state">
+                    <lightning-icon icon-name="utility:slider" size="large" class="st-empty-icon"></lightning-icon>
+                    <h3>No Requirements Configured</h3>
+                    <p>Start building this job's template by selecting documents from the master list.</p>
+                    <lightning-button label="Add Requirements" variant="brand" icon-name="utility:add" onclick={openSettingsModal}></lightning-button>
+                </div>
+            </template>
 
-            <!-- Stage Rows -->
-            <div class="st-grid-body">
-                <template for:each={stages} for:item="stage">
-                    <div key={stage.key} class={stage.rowClass}>
+            <template if:false={isCanvasEmpty}>
+                <div class="st-grid-header">
+                    <div class="st-col-drag"></div> 
+                    <div class="st-col-stage">Requirement Stage</div>
+                    <div class="st-col-index">Order</div>
+                    <div class="st-col-required">Mandatory</div>
+                    <div class="st-col-actions">Actions</div>
+                </div>
 
-                        <!-- Stage Name -->
-                        <div class="st-col-stage">
-                            <div class="st-stage-name-wrap">
-                                <div class="st-stage-dot" data-key={stage.key}></div>
-                                <div class="st-stage-info">
-                                    <span class="st-stage-label">{stage.label}</span>
-                                    <span class="st-stage-key">{stage.key}</span>
+                <div class="st-grid-body" ondragover={handleDragOverContainer}>
+                    <template for:each={canvasStages} for:item="stage">
+                        <div key={stage.key} 
+                             class={stage.rowClass} 
+                             draggable="true"
+                             ondragstart={handleDragStart}
+                             ondragover={handleDragOver}
+                             ondragleave={handleDragLeave}
+                             ondrop={handleDrop}
+                             data-key={stage.key}>
+
+                            <div class="st-col-drag" title="Drag to reorder">
+                                <lightning-icon icon-name="utility:rows" size="x-small" class="st-drag-icon"></lightning-icon>
+                            </div>
+
+                            <div class="st-col-stage">
+                                <div class="st-stage-name-wrap">
+                                    <lightning-icon icon-name={stage.iconName} size="x-small" class="st-stage-icon"></lightning-icon>
+                                    <div class="st-stage-info">
+                                        <span class="st-stage-label">{stage.label}</span>
+                                        <span class="st-stage-key">{stage.key}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Index -->
-                        <div class="st-col-index">
-                            <div class="st-index-controls">
-                                <button
-                                    class="st-index-btn"
-                                    data-key={stage.key}
-                                    data-dir="up"
-                                    onclick={handleMoveStage}
-                                    disabled={stage.isFirst}
-                                    title="Move up">
-                                    <lightning-icon icon-name="utility:chevronup" size="xx-small"></lightning-icon>
-                                </button>
+                            <div class="st-col-index">
                                 <span class="st-index-value">{stage.index}</span>
-                                <button
-                                    class="st-index-btn"
-                                    data-key={stage.key}
-                                    data-dir="down"
-                                    onclick={handleMoveStage}
-                                    disabled={stage.isLast}
-                                    title="Move down">
-                                    <lightning-icon icon-name="utility:chevrondown" size="xx-small"></lightning-icon>
-                                </button>
                             </div>
-                        </div>
 
-                        <!-- Required -->
-                        <div class="st-col-required">
-                            <div
-                                class={stage.requiredToggleClass}
-                                data-key={stage.key}
-                                data-field="isRequired"
-                                onclick={handleToggle}
-                                role="switch"
-                                aria-checked={stage.isRequiredStr}
-                                tabindex="0">
-                                <div class="st-toggle-knob"></div>
+                            <div class="st-col-required">
+                                <template if:false={stage.isLocked}>
+                                    <div class={stage.requiredToggleClass} data-key={stage.key} onclick={handleToggleRequired} role="switch" aria-checked={stage.isRequiredStr} tabindex="0">
+                                        <div class="st-toggle-knob"></div>
+                                    </div>
+                                </template>
+                                <template if:true={stage.isLocked}>
+                                    <div class="st-toggle st-toggle--on st-toggle--disabled" title="Required by default">
+                                        <div class="st-toggle-knob"></div>
+                                    </div>
+                                </template>
+                                <span class="st-toggle-label">{stage.requiredLabel}</span>
                             </div>
-                            <span class="st-toggle-label">{stage.requiredLabel}</span>
-                        </div>
 
-                        <!-- Active -->
-                        <div class="st-col-active">
-                            <div
-                                class={stage.activeToggleClass}
-                                data-key={stage.key}
-                                data-field="isActive"
-                                onclick={handleToggle}
-                                role="switch"
-                                aria-checked={stage.isActiveStr}
-                                tabindex="0">
-                                <div class="st-toggle-knob"></div>
+                            <div class="st-col-actions">
+                                <template if:false={stage.isLocked}>
+                                    <lightning-button-icon icon-name="utility:delete" variant="bare" class="st-delete-btn" alternative-text="Remove from template" title="Remove" data-key={stage.key} onclick={handleRemoveFromCanvas}></lightning-button-icon>
+                                </template>
+                                <template if:true={stage.isLocked}>
+                                    <lightning-icon icon-name="utility:lock" size="x-small" class="st-locked-icon" title="Mandatory Stage (Cannot be removed)"></lightning-icon>
+                                </template>
                             </div>
-                            <span class="st-toggle-label">{stage.activeLabel}</span>
-                        </div>
 
-                        <!-- Status Badge -->
-                        <div class="st-col-status">
-                            <span class={stage.badgeClass}>{stage.badgeLabel}</span>
                         </div>
+                    </template>
+                </div>
 
+                <div class="st-footer">
+                    <div class="st-footer-stat">
+                        <span class="st-footer-num">{totalCount}</span>
+                        <span class="st-footer-label">Selected Stages</span>
                     </div>
-                </template>
-            </div>
+                    <div class="st-footer-divider"></div>
+                    <div class="st-footer-stat">
+                        <span class="st-footer-num">{requiredCount}</span>
+                        <span class="st-footer-label">Mandatory Stages</span>
+                    </div>
+                </div>
+            </template>
+        </template>
 
-            <!-- Summary Footer -->
-            <div class="st-footer">
-                <div class="st-footer-stat">
-                    <span class="st-footer-num">{activeCount}</span>
-                    <span class="st-footer-label">Active stages</span>
-                </div>
-                <div class="st-footer-divider"></div>
-                <div class="st-footer-stat">
-                    <span class="st-footer-num">{requiredCount}</span>
-                    <span class="st-footer-label">Required stages</span>
-                </div>
-                <div class="st-footer-divider"></div>
-                <div class="st-footer-stat">
-                    <span class="st-footer-num">{totalCount}</span>
-                    <span class="st-footer-label">Total stages</span>
+        <template if:true={isModalOpen}>
+            <div class="st-modal-backdrop">
+                <div class="st-modal">
+                    <div class="st-modal-header">
+                        <h2 class="st-modal-title">Manage Requirements</h2>
+                        <button class="st-modal-close" onclick={closeSettingsModal}>
+                            <lightning-icon icon-name="utility:close" size="x-small"></lightning-icon>
+                        </button>
+                    </div>
+                    <div class="st-modal-body">
+                        <p class="st-modal-desc">Select the documents and stages required for this specific job. You can reorder them and set them as mandatory later.</p>
+                        <div class="st-palette-list">
+                            <template for:each={paletteStages} for:item="item">
+                                <label key={item.key} class={item.itemClass}>
+                                    <div class="st-palette-checkbox">
+                                        <lightning-input type="checkbox" checked={item.isSelected} disabled={item.isLocked} data-key={item.key} onchange={handlePaletteSelection}></lightning-input>
+                                    </div>
+                                    <div class="st-palette-details">
+                                        <lightning-icon icon-name={item.iconName} size="x-small" class="st-palette-icon"></lightning-icon>
+                                        <div class="st-palette-text">
+                                            <span class="st-palette-label">
+                                                {item.label}
+                                                <template if:true={item.isLocked}>
+                                                    <span class="st-locked-badge">(Required)</span>
+                                                </template>
+                                            </span>
+                                            <span class="st-palette-key">{item.key}</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="st-modal-footer">
+                        <button class="st-modal-cancel" onclick={closeSettingsModal}>Cancel</button>
+                        <button class="st-modal-proceed" onclick={applySettings}>Apply Selection</button>
+                    </div>
                 </div>
             </div>
         </template>

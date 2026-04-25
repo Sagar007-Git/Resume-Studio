@@ -7,12 +7,11 @@
 
         <div class="cs-card">
 
-            <!-- ── Header ── -->
-<template if:false={hideHeader}>
-    <div class="cs-card-header">
-        <h1 class="cs-title">Candidate Submission</h1>
-    </div>
-</template>
+            <template if:false={hideHeader}>
+                <div class="cs-card-header">
+                    <h1 class="cs-title">Candidate Submission</h1>
+                </div>
+            </template>
 
             <div class={tabsStickyClass}>
                 <div class="cs-tabs" role="tablist">
@@ -34,92 +33,104 @@
                 </div>
             </div>
 
-            <!-- ── Body ── -->
             <div class="cs-card-body">
-
-                <template if:true={isResumeStage}>
+                
+                <template if:true={isStageResume}>
                     <c-candidate-submission-stage-resume
                         candidate-id={submissionData.candidateId}
                         job-applicant-id={submissionData.jobApplicantId}
                         submission-record-id={submissionRecordId}
-                        selected-resume-id={submissionData.documents.Resume}
-                        onresumeselectionchange={handleResumeSelectionChange}
+                        stage-key={currentStage}
+                        selected-document-id={currentSelectedDocId}
+                        excluded-document-ids={currentExcludedDocIds}
+                        documents={submissionData.documents} 
+                        pre-selected-resume-id={preSelectedResumeId}
+                        pre-selected-resume-name={preSelectedResumeName}
+                        onselectionchange={handleUniversalSelectionChange}
+                        onmergedchange={handleReviewMergedChange}
                         ondocumentsrefresh={handleStageDocumentsRefresh}>
                     </c-candidate-submission-stage-resume>
                 </template>
 
-                <template if:true={isReferencesStage}>
+                <template if:true={isStageReferences}>
                     <c-candidate-submission-stage-references
                         candidate-id={submissionData.candidateId}
                         job-applicant-id={submissionData.jobApplicantId}
                         submission-record-id={submissionRecordId}
-                        selected-document-id={submissionData.documents.References}
-                        ondocumentsrefresh={handleStageDocumentsRefresh}
-                        onselectionchange={handleFileStageSelectionChange}>
+                        stage-key={currentStage}
+                        selected-document-id={currentSelectedDocId}
+                        excluded-document-ids={currentExcludedDocIds}
+                        documents={submissionData.documents} 
+                        onselectionchange={handleUniversalSelectionChange}
+                        onmergedchange={handleReviewMergedChange}
+                        ondocumentsrefresh={handleStageDocumentsRefresh}>
                     </c-candidate-submission-stage-references>
                 </template>
 
-                <template if:true={isBlsStage}>
+                <template if:true={isStageBls}>
                     <c-candidate-submission-stage-bls-card
                         candidate-id={submissionData.candidateId}
                         job-applicant-id={submissionData.jobApplicantId}
                         submission-record-id={submissionRecordId}
-                        selected-document-id={submissionData.documents.BLS_Card}
-                        excluded-document-ids={blsExcludedDocIds}
-                        onselectionchange={handleFileStageSelectionChange}
+                        stage-key={currentStage}
+                        selected-document-id={currentSelectedDocId}
+                        excluded-document-ids={currentExcludedDocIds}
+                        documents={submissionData.documents} 
+                        onselectionchange={handleUniversalSelectionChange}
+                        onmergedchange={handleReviewMergedChange}
                         ondocumentsrefresh={handleStageDocumentsRefresh}>
                     </c-candidate-submission-stage-bls-card>
                 </template>
 
-                <template if:true={isAclsStage}>
+                <template if:true={isStageAcls}>
                     <c-candidate-submission-stage-acls-card
                         candidate-id={submissionData.candidateId}
                         job-applicant-id={submissionData.jobApplicantId}
                         submission-record-id={submissionRecordId}
-                        selected-document-id={submissionData.documents.ACLS_Card}
-                        excluded-document-ids={aclsExcludedDocIds}
-                        onselectionchange={handleFileStageSelectionChange}
+                        stage-key={currentStage}
+                        selected-document-id={currentSelectedDocId}
+                        excluded-document-ids={currentExcludedDocIds}
+                        documents={submissionData.documents} 
+                        onselectionchange={handleUniversalSelectionChange}
+                        onmergedchange={handleReviewMergedChange}
                         ondocumentsrefresh={handleStageDocumentsRefresh}>
                     </c-candidate-submission-stage-acls-card>
                 </template>
 
-                <!-- <template if:true={isSkillsChecklistStage}>
-                    <c-candidate-submission-stage-skills-checklist
-                        candidate-id={submissionData.candidateId}
-                        job-applicant-id={submissionData.jobApplicantId}
-                        selected-document-id={submissionData.documents.Skills_Checklist}
-                        excluded-document-ids={skillsChecklistExcludedDocIds}
-                        onselectionchange={handleFileStageSelectionChange}
-                        ondocumentsrefresh={handleStageDocumentsRefresh}>
-                    </c-candidate-submission-stage-skills-checklist>
-                </template> -->
-
-                <template if:true={isCredentialsStage}>
+                <template if:true={isStageCredentials}>
                     <c-candidate-submission-stage-credentials
                         candidate-id={submissionData.candidateId}
                         job-applicant-id={submissionData.jobApplicantId}
                         submission-record-id={submissionRecordId}
-                        selected-document-id={submissionData.documents.Credentials}
-                        excluded-document-ids={credentialsExcludedDocIds}
-                        onselectionchange={handleFileStageSelectionChange}
+                        stage-key={currentStage}
+                        selected-document-id={currentSelectedDocId}
+                        excluded-document-ids={currentExcludedDocIds}
+                        documents={submissionData.documents} 
+                        onselectionchange={handleUniversalSelectionChange}
+                        onmergedchange={handleReviewMergedChange}
                         ondocumentsrefresh={handleStageDocumentsRefresh}>
                     </c-candidate-submission-stage-credentials>
                 </template>
 
-                <template if:true={isReviewStage}>
+                <template if:true={isStageReview}>
                     <c-candidate-submission-stage-review
                         candidate-id={submissionData.candidateId}
                         job-applicant-id={submissionData.jobApplicantId}
                         submission-record-id={submissionRecordId}
-                        documents={submissionData.documents}
+                        stage-key={currentStage}
+                        selected-document-id={currentSelectedDocId}
+                        excluded-document-ids={currentExcludedDocIds}
+                        documents={submissionData.documents} 
                         pre-selected-resume-id={preSelectedResumeId}
                         pre-selected-resume-name={preSelectedResumeName}
+                        onselectionchange={handleUniversalSelectionChange}
                         onmergedchange={handleReviewMergedChange}
                         ondocumentsrefresh={handleStageDocumentsRefresh}>
                     </c-candidate-submission-stage-review>
                 </template>
+                
 
-            </div><!-- /cs-card-body -->
+            </div>
 
             <!-- ── Footer ── -->
             <div class="cs-footer">
@@ -206,3 +217,18 @@
 
     </div>
 </template>
+
+
+
+
+
+ <!-- <template if:true={isSkillsChecklistStage}>
+                    <c-candidate-submission-stage-skills-checklist
+                        candidate-id={submissionData.candidateId}
+                        job-applicant-id={submissionData.jobApplicantId}
+                        selected-document-id={submissionData.documents.Skills_Checklist}
+                        excluded-document-ids={skillsChecklistExcludedDocIds}
+                        onselectionchange={handleFileStageSelectionChange}
+                        ondocumentsrefresh={handleStageDocumentsRefresh}>
+                    </c-candidate-submission-stage-skills-checklist>
+                </template> -->
